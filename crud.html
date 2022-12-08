@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Title</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.js" defer></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  </head>
+  <body>
+
+    <div class="container" x-data="CrudAlpine()" x-init="iniciar">
+        <div class="row">
+
+             
+            <div class="col-md-5">
+                <br>
+                <div class="card">
+                    <div class="card-header">
+                        Empleados
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                          <label for="">Nombre</label>
+                          <input type="text"
+                            x-model="nombre"
+                            x-ref="nombre"
+                            class="form-control" name="nombre" id="nombre" aria-describedby="helpId" placeholder="Nombre Completo">
+                          <small id="helpId" class="form-text text-muted">Escribe el nombre del empleado</small>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="">Correo</label>
+                          <input type="text"
+                            x-model="correo"
+                            x-ref="correo"
+                            class="form-control" name="correo" id="correo" aria-describedby="helpId" placeholder="Correo Electronico">
+                          <small id="helpId" class="form-text text-muted">Escribe el correo del empleado</small>
+                        </div>
+
+                        <div class="btn-group" role="group" aria-label="">
+                            <button type="button" class="btn btn-success" x-ref="btnAgregar"  x-on:click="accion('?insertar=1')">Agregar</button>
+                            <button type="button" class="btn btn-warning" x-ref="btnModificar" x-on:click="accion('?actualizar=1')">Modificar</button>
+                        </div>
+
+
+
+
+                    </div>
+                    <div class="card-footer text-muted">
+               
+                    </div>
+                </div>
+
+
+
+                
+            </div>
+
+            <div class="col-md-7">
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+
+                        <template x-if="datosCargados" x-for="empleado in empleados" :key="empleado.id">
+                            <tr>
+                                <td x-text="empleado.id">1</td>
+                                <td x-text="empleado.nombre">Bardo</td>
+                                 <td x-text="empleado.correo">Wa@outlook.es</td>
+                                 <td>
+                                 <div class="btn-group" role="group" aria-label="">
+                                    <button type="button" x-on:click="seleccionar(empleado)" class="btn btn-info">Seleccionar</button>
+                                    <button type="button" x-on:click="borrar(empleado)" class="btn btn-danger">Borrar</button>
+                                 </div>
+                            </td>
+                         </tr>
+                        </template>
+
+                    </tbody>
+                </table>
+
+
+
+
+            </div>
+
+
+            
+        </div>
+    </div>
+    <script>
+        function CrudAlpine(){
+            return{
+                id:0,
+                nombre:"",
+                correo:"",
+                url:"http://localhost/empleados/",
+                empleados:[],
+                datosCargados: false,
+
+
+                iniciar:function(){
+
+                    this.leer();
+                    
+
+
+                    this.$refs.btnAgregar.disabled=false;
+                    this.$refs.btnModificar.disabled=true;
+
+                    this.nombre="";
+                    this.correo="";
+
+                    this.$watch('nombre',()=>{
+                        this.$refs.nombre.classList.remove('is-invalid')
+                    });
+
+                    this.$watch('correo',()=>{
+                        this.$refs.correo.classList.remove('is-invalid')
+                    });
+                    
+                },
+                accion:function(urlAccion){
+                    if(this.validarCampos()){
+                        var datosEnvio={method:"POST", body:JSON.stringify({id:this.id, nombre:this.nombre,correo:this.correo})};
+                        this.peticion(urlAccion,datosEnvio);
+                    }
+
+                },
+
+                seleccionar:function(empleado){
+                    this.$refs.btnAgregar.disabled=true;
+                    this.$refs.btnModificar.disabled=false;
+
+
+                    this.id=empleado.id;
+                    this.nombre=empleado.nombre;
+                    this.correo=empleado.correo;
+                },
+
+                peticion:function(urlAccion,metodos){
+
+                    fetch(this.url+urlAccion,metodos).
+                    then(r=>r.json()).
+                    then((datosEmpleado)=>{
+                        })
+                        this.iniciar();
+                },
+
+
+                leer:function(){
+
+                    fetch(this.url).
+                    then(r=>r.json()).
+                    then((datosEmpleado)=>{
+                        console.log(datosEmpleado)
+                        this.datosCargados=(datosEmpleado[0].id!=undefined);
+                        if(this.datosCargados){
+                            this.empleados=datosEmpleado;
+                        }
+                       
+
+                    }). 
+                    catch(console.log);
+
+                },
+
+                borrar:function(empleado){
+                   
+                    this.peticion("?borrar=" +empleado.id, null);
+
+
+                },
+
+                validarCampos:function(){
+                    if((this.nombre.length)&&(this.correo.length)){
+                        return true;
+                    }else{
+                        this.$refs.nombre.classList.add('is-invalid')
+                        this.$refs.correo.classList.add('is-invalid')
+                        return false;
+                    }
+                }
+            }
+        }
+    </script>
+
+  </body>
+</html>
